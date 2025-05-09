@@ -1,0 +1,15 @@
+LICENSE
+MANIFEST.in
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+src/mexc_sdk/__init__.py
+src/mexc_sdk/py.typed
+src/mexc_sdk.egg-info/PKG-INFO
+src/mexc_sdk.egg-info/SOURCES.txt
+src/mexc_sdk.egg-info/dependency_links.txt
+src/mexc_sdk.egg-info/requires.txt
+src/mexc_sdk.egg-info/top_level.txt
+src/mexc_sdk/_jsii/__init__.py
+src/mexc_sdk/_jsii/mexc-sdk@1.0.0.jsii.tgz
