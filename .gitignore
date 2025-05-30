@@ -4,3 +4,11 @@
 venv
 playwright_data
 package-lock.json
+future_override
+*.pyc
+src/__pycache__
+src/utils/__pycache__
+src/utils/future/__pycache__
+src/utils/future/mexc_future/__pycache__
+src/utils/future/mexc_future/mexc_future/__pycache__
+src/utils/future/mexc_future/mexc_future/mexc_future/__pycache__

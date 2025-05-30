@@ -18,7 +18,7 @@ class MexcBot:
         self.signal = 0
         self.mexc_web_automation = MexcWebAutomation()
 
-        self.length = 10
+        self.length = 4
         self.request_retries = 3
 
         self.mintick = 0.01
@@ -26,7 +26,7 @@ class MexcBot:
 
     def get_spot_kline(self) -> list:
         params = {
-            "symbol": "SOLUSDT",
+            "symbol": "ETHUSDT",
             "interval": "1m",
             "limit": "15",
             # "startTime": int((datetime.datetime.now() - datetime.timedelta(minutes=15)).timestamp() * 1000),
@@ -102,6 +102,8 @@ class MexcBot:
         kline = self.get_future_kline()
         if not kline:
             logger.error("获取K线数据失败")
+            self.mexc_web_automation.close_open_position()
+            self.signal = 0
             return
         logger.info(f"当前分钟的时间戳: {int(datetime.datetime.now().timestamp()) - int(datetime.datetime.now().timestamp()) % 60}")
         if kline[-1][0] > int(datetime.datetime.now().timestamp()) - 60:
@@ -113,7 +115,8 @@ class MexcBot:
         low_prices = [float(item[3]) for item in kline]
         # 计算动量信号
         signal = self.calculate_momentum_signal(close_prices)
-        logger.info(f"动量信号: {'long entry' if signal == 1 else 'short entry' if signal == -1 else 'no signal'}")
+        logger.info(f"当前动量信号: {'long entry' if self.signal == 1 else 'short entry' if self.signal == -1 else 'no signal'}")
+        logger.info(f"最新动量信号: {'long entry' if signal == 1 else 'short entry' if signal == -1 else 'no signal'}")
         if self.signal == 0:
             if signal == 1:
                 self.mexc_web_automation.long_entry()
@@ -123,32 +126,50 @@ class MexcBot:
                 self.signal = signal
         else:
             if signal == 0:
-                is_successed = self.mexc_web_automation.cancel_stop()
-                if not is_successed:
-                    return
-                if self.signal == 1:
-                    self.signal = -1
-                elif self.signal == -1:
-                    self.signal = 1
+                open_stop_orders = self.mexc_web_automation.get_open_stop_orders()
+                if open_stop_orders and open_stop_orders.get("data"):
+                    is_successed = self.mexc_web_automation.cancel_stop_loss()
+                    if not is_successed or not is_successed.get("success"):
+                        return
+                    if self.signal == 1:
+                        self.signal = -1
+                    elif self.signal == -1:
+                        self.signal = 1
             if signal == 1:
                 if self.signal == 1:
                     return
                 if self.signal == -1:
-                    is_successed = self.mexc_web_automation.set_stop(high_prices[-1] + self.mintick)
-                    if not is_successed:
-                        self.mexc_web_automation.close_position()
-                        self.signal = 0
-                        return
+                    open_stop_orders = self.mexc_web_automation.get_open_stop_orders()
+                    if open_stop_orders and open_stop_orders.get("data"):
+                        logger.info(f"当前存在多单止损订单: {open_stop_orders}，取消掉")
+                        is_successed = self.mexc_web_automation.cancel_stop_loss()
+                        if not is_successed or not is_successed.get("success"):
+                            return
+                    else:
+                        stop_loss_price = round(high_prices[-1] + self.mintick, 2)
+                        logger.info(f"当前不存在多单止损订单，设置止损 {high_prices[-1]} + {self.mintick} = {stop_loss_price}")
+                        is_successed = self.mexc_web_automation.set_open_stop_loss(stop_loss_price)
+                        if not is_successed:
+                            self.mexc_web_automation.close_open_position()
+                        self.mexc_web_automation.long_entry()
                 self.signal = signal
             elif signal == -1:
                 if self.signal == -1:
                     return
                 if self.signal == 1:
-                    is_successed = self.mexc_web_automation.set_stop(low_prices[-1] - self.mintick)
-                    if not is_successed:
-                        self.mexc_web_automation.close_position()
-                        self.signal = 0
-                        return
+                    open_stop_orders = self.mexc_web_automation.get_open_stop_orders()
+                    if open_stop_orders and open_stop_orders.get("data"):
+                        logger.info(f"当前存在空单止损订单: {open_stop_orders}，取消掉")
+                        is_successed = self.mexc_web_automation.cancel_stop_loss()
+                        if not is_successed or not is_successed.get("success"):
+                            return
+                    else:   
+                        stop_loss_price = round(low_prices[-1] - self.mintick, 2)
+                        logger.info(f"当前不存在空单止损订单，设置止损 {low_prices[-1]} - {self.mintick} = {stop_loss_price}")
+                        is_successed = self.mexc_web_automation.set_open_stop_loss(stop_loss_price)
+                        if not is_successed:
+                            self.mexc_web_automation.close_open_position()
+                        self.mexc_web_automation.short_entry()
                 self.signal = signal
 
     def run(self):

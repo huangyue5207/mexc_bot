@@ -16,11 +16,12 @@ def get_future_kline() -> list:
         "start": int((datetime.datetime.now() - datetime.timedelta(minutes=15)).timestamp()),
         "end": int(datetime.datetime.now().timestamp()),
     }
+    future = mexc_future.mexc_market()
     i = 0
     while i < 3:
         try:
             logger.info(f"获取期货K线数据: {params}")
-            kline = mexc_future.mexc_market().get_kline(params)
+            kline = future.get_kline(params)
             for i, ts in enumerate(kline.get('data', {}).get('time', [])):
                 ret.append([
                     ts,
@@ -39,4 +40,4 @@ def get_future_kline() -> list:
 
 if __name__ == "__main__":
     kline = get_future_kline()
-    print(kline)
+    logger.info(kline)
