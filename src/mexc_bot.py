@@ -18,10 +18,10 @@ class MexcBot:
         self.signal = 0
         self.mexc_web_automation = MexcWebAutomation()
 
-        self.length = 4
+        self.length = 2
         self.request_retries = 3
 
-        self.mintick = 0.01
+        self.mintick = 0.1
 
 
     def get_spot_kline(self) -> list:
@@ -45,7 +45,7 @@ class MexcBot:
     def get_future_kline(self) -> list:
         ret = []
         params = {
-            "symbol": "SOL_USDT",
+            "symbol": "BTC_USDT",
             "interval": "Min1",
             "start": int((datetime.datetime.now() - datetime.timedelta(minutes=15)).timestamp()),
             "end": int(datetime.datetime.now().timestamp()),
@@ -151,7 +151,7 @@ class MexcBot:
                         is_successed = self.mexc_web_automation.set_open_stop_loss(stop_loss_price)
                         if not is_successed:
                             self.mexc_web_automation.close_open_position()
-                        self.mexc_web_automation.long_entry()
+                            self.mexc_web_automation.long_entry()
                 self.signal = signal
             elif signal == -1:
                 if self.signal == -1:
@@ -169,7 +169,7 @@ class MexcBot:
                         is_successed = self.mexc_web_automation.set_open_stop_loss(stop_loss_price)
                         if not is_successed:
                             self.mexc_web_automation.close_open_position()
-                        self.mexc_web_automation.short_entry()
+                            self.mexc_web_automation.short_entry()
                 self.signal = signal
 
     def run(self):

@@ -95,10 +95,10 @@ class MexcWebAutomation:
         # 启用请求拦截
         self.page.route("**/*.js", self.handle_route)
 
-        self.pair = "SOL_USDT"
+        self.pair = "BTC_USDT"
         self.index_url = f"https://www.mexc.co/futures/{self.pair}?type=linear_swap"
 
-        self.amount = 50
+        self.amount = 480
         self.leverage = 50
 
         self.login()
@@ -106,7 +106,7 @@ class MexcWebAutomation:
     # 设置请求拦截
     def handle_route(self, route, request):
         url = request.url
-        if "https://static.mocortech.com/futures-v3/_next/static/chunks/8267" in url:
+        if "https://static.mocortech.com/futures-v3/_next/static/chunks/8263" in url:
             logger.info(f"拦截到请求: {url}")
             # 读取本地修改过的 JS 文件
             with open("/Users/huangyue/Workspace/mexc_bot/js/static.mocortech.com/futures-v3/_next/static/chunks/8544.js", 
