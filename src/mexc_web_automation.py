@@ -93,7 +93,7 @@ class MexcWebAutomation:
         """)
 
         # 启用请求拦截
-        self.page.route("**/*.js", self.handle_route)
+        self.page.route("https://static.mocortech.com/futures-v3/_next/static/chunks/*", self.handle_route)
 
         self.pair = "BTC_USDT"
         self.index_url = f"https://www.mexc.co/futures/{self.pair}?type=linear_swap"
@@ -106,22 +106,19 @@ class MexcWebAutomation:
     # 设置请求拦截
     def handle_route(self, route, request):
         url = request.url
-        if "https://static.mocortech.com/futures-v3/_next/static/chunks/8263" in url:
+        response = route.fetch()
+        body = response.text()
+        if "async function updateSavedFeeStatus(e)" in body:
             logger.info(f"拦截到请求: {url}")
-            # 读取本地修改过的 JS 文件
-            with open("/Users/huangyue/Workspace/mexc_bot/js/static.mocortech.com/futures-v3/_next/static/chunks/8544.js", 
-                        "r", encoding="utf-8") as f:
-                modified_js = f.read()
-            
-            # 返回修改后的内容
+            inject_js = r"window.mexcAPI={submitOrder:submitOrder,getOpenStopOrderList:getOpenStopOrderList,cancelStopOrderAll:cancelStopOrderAll,addStopOrderByPosition:addStopOrderByPosition,getUserPositions:getUserPositions};"
+            modified_js = body.replace("async function updateSavedFeeStatus(e)", inject_js + "async function updateSavedFeeStatus(e)") 
             route.fulfill(
                 status=200,
                 content_type="application/javascript",
                 body=modified_js
             )
         else:
-            # 其他请求正常处理
-            route.continue_() 
+            route.continue_()
         
     def login(self):
         """
@@ -399,15 +396,15 @@ class MexcWebAutomation:
 if __name__ == "__main__":
     # 创建自动化实例
     mexc = MexcWebAutomation(headless=False)
-    try:
-        mexc.long_entry()
-        time.sleep(10)
-        mexc.set_open_stop_loss(2530)
-        time.sleep(10)
-        mexc.cancel_stop_loss()
-        time.sleep(10)
-        mexc.close_open_position()
-        time.sleep(10)
-    finally:
-        # 确保浏览器正常关闭
-        mexc.close()
+    # try:
+    #     mexc.long_entry()
+    #     time.sleep(10)
+    #     mexc.set_open_stop_loss(2530)
+    #     time.sleep(10)
+    #     mexc.cancel_stop_loss()
+    #     time.sleep(10)
+    #     mexc.close_open_position()
+    #     time.sleep(10)
+    # finally:
+    #     # 确保浏览器正常关闭
+    #     mexc.close()
